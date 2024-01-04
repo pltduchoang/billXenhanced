@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "92547576670",
+    "project_id": "billx-91f70",
+    "storage_bucket": "billx-91f70.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:92547576670:android:e1d365091fd62b195855cf",
+        "android_client_info": {
+          "package_name": "com.billx2"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "92547576670-3ke4rteef0vpbhagkf8aoth3mi2v785v.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDR_kOB3Yt1RgfVITTIe0zNcR8xRERklu0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "92547576670-3ke4rteef0vpbhagkf8aoth3mi2v785v.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
