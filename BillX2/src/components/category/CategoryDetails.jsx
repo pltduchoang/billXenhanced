@@ -7,18 +7,65 @@ import ExpenseDetailModal from '../dashboard/ExpenseDetailModal';
 import EditExpense from '../dashboard/EditExpense';
 
 const CategoryDetails = ({ isVisible, onClose, category }) => {
-    const { thisMonthExpense, lastMonthExpense, allCategories, allAccounts } = useContext(GlobalContext);
+    const {
+        allCategories, allAccounts,
+        currentMonth,
+        janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, 
+        junExpenses, julExpenses, augExpenses, sepExpenses, octExpenses, 
+        novExpenses, decExpenses,
+    } = useContext(GlobalContext);
+
     const [selectedExpenseForDetail, setSelectedExpenseForDetail] = useState(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [selectedExpenseForEdit, setSelectedExpenseForEdit] = useState(null);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+    const [collapsedMonths, setCollapsedMonths] = useState({
+        jan: true, feb: true, mar: true, apr: true, may: true, jun: true,
+        jul: true, aug: true, sep: true, oct: true, nov: true, dec: true
+    });
 
-    const filterExpensesByCategory = (expenses, categoryId) => {
-        return expenses.filter(expense => expense.categoryId === categoryId);
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthlyExpenses = [janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, junExpenses, 
+                             julExpenses, augExpenses, sepExpenses, octExpenses, novExpenses, decExpenses];
+
+    const renderExpensesForMonth = (expenses, monthName, monthKey) => {
+        const isCurrentMonth = monthKeys[currentMonth] === monthKey;
+        const monthDisplayName = isCurrentMonth ? `${monthName} (This Month)` : monthName;
+        const monthCategoryExpenses = expenses.filter(expense => expense.categoryId === category.id);
+
+        const totalSpending = monthCategoryExpenses.reduce((total, expense) => {
+            return expense.type === 'spend' ? total + expense.amount : total - expense.amount;
+        }, 0);
+
+        const toggleCollapse = () => {
+            setCollapsedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+        };
+
+        return (
+            <View key={monthKey}>
+                <TouchableOpacity style={styles.monthHeader} onPress={toggleCollapse}>
+                    <Text style={styles.monthName}>{monthDisplayName}</Text>
+                    <Text style={styles.totalSpending}>Total Spending: ${totalSpending.toFixed(2)}</Text>
+                </TouchableOpacity>
+                {!collapsedMonths[monthKey] && (
+                    monthCategoryExpenses.length > 0 ? (
+                        monthCategoryExpenses.map(expense => (
+                            <ExpenseCard 
+                                key={expense.id} 
+                                expense={expense}
+                                onEdit={() => handleExpenseLongPress(expense)}
+                                onDetails={() => handleExpensePress(expense)}
+                            />
+                        ))
+                    ) : (
+                        <Text style={styles.noDataText}>No expenses in {monthName}.</Text>
+                    )
+                )}
+            </View>
+        );
     };
-
-    const thisMonthCategoryExpenses = filterExpensesByCategory(thisMonthExpense, category.id);
-    const lastMonthCategoryExpenses = filterExpensesByCategory(lastMonthExpense, category.id);
 
     const handleExpensePress = (expense) => {
         setSelectedExpenseForDetail(expense);
@@ -40,31 +87,7 @@ const CategoryDetails = ({ isVisible, onClose, category }) => {
                 <Text style={styles.title}>{category.categoryName} Details</Text>
                 
                 <ScrollView>
-                    {/* This Month's Expenses */}
-                    <Text style={styles.sectionTitle}>This Month's Expenses</Text>
-                    {thisMonthCategoryExpenses.length > 0 ?
-                        thisMonthCategoryExpenses.map(expense => (
-                            <ExpenseCard 
-                                key={expense.id} 
-                                expense={expense}
-                                onEdit={() => handleExpenseLongPress(expense)}
-                                onDetails={() => handleExpensePress(expense)}
-                            />
-                        )) : <Text style={styles.noDataText}>No expenses this month.</Text>
-                    }
-
-                    {/* Last Month's Expenses */}
-                    <Text style={styles.sectionTitle}>Last Month's Expenses</Text>
-                    {lastMonthCategoryExpenses.length > 0 ?
-                        lastMonthCategoryExpenses.map(expense => (
-                            <ExpenseCard 
-                                key={expense.id} 
-                                expense={expense}
-                                onEdit={() => handleExpenseLongPress(expense)}
-                                onDetails={() => handleExpensePress(expense)}
-                            />
-                        )) : <Text style={styles.noDataText}>No expenses last month.</Text>
-                    }
+                    {monthNames.map((monthName, index) => renderExpensesForMonth(monthlyExpenses[index], monthName, monthKeys[index]))}
                 </ScrollView>
 
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -129,6 +152,21 @@ const styles = StyleSheet.create({
     },
     buttonText: {
         color: 'white',
+    },
+    monthHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
+        backgroundColor: '#427D9D',
+    },
+    monthName: {
+        color: '#DDF2FD',
+        fontSize: 18,
+        fontWeight: 'bold',
+    },
+    totalSpending: {
+        color: '#DDF2FD',
+        fontSize: 16,
     },
     // ... other styles
 });

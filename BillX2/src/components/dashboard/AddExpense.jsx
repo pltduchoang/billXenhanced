@@ -20,7 +20,7 @@ const AddExpense = ({ isVisible, onClose, allCategory, allAccount }) => {
 
     const [isLoading, setIsLoading] = useState(false);
 
-    const { user, refreshPage, setRefreshPage } = useContext(GlobalContext);
+    const { user, refreshPage, setRefreshPage, currentYear } = useContext(GlobalContext);
 
 
     const [selectedCategoryId, setSelectedCategoryId] = useState('');
@@ -91,7 +91,8 @@ const AddExpense = ({ isVisible, onClose, allCategory, allAccount }) => {
             categoryId: selectedCategoryId,
             accountId: selectedAccountId,
         };
-        await ExpenseService.createExpense(user.uid, newExpense);
+        const year = time.getFullYear();
+        await ExpenseService.createExpense(user.uid, year ,newExpense);
         setIsLoading(false);
         setRefreshPage(refreshPage + 1); // Refresh the page
         onClose(); // Close the modal

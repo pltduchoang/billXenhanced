@@ -9,7 +9,17 @@ import EditCategory from '../components/category/EditCategory';
 import CategoryDetails from '../components/category/CategoryDetails';
 
 const Categories = () => {
-    const { user, refreshPage, setRefreshPage, thisMonthExpense } = useContext(GlobalContext);
+    const { 
+        user, refreshPage, setRefreshPage, 
+        allCategories, 
+        allAccounts, 
+        currentYear,
+        currentMonth,
+        janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, 
+        junExpenses, julExpenses, augExpenses, sepExpenses, octExpenses, 
+        novExpenses, decExpenses
+    } = useContext(GlobalContext);    
+    
     const [categories, setCategories] = useState([]);
 
 
@@ -91,15 +101,20 @@ const Categories = () => {
         <ScrollView style={styles.container}>
             <Text style={styles.title}>Categories</Text>
             {categories
-                .filter(category => category.categoryType !== 'saving') // Filter out 'saving' type categories
-                .map(category => (
-                    <CategoryCard 
-                        key={category.id} 
-                        category={category} 
-                        thisMonthExpense={thisMonthExpense} 
-                        onEdit={handleEditCategory}
-                        onPress={handleShowDetails}
-                    />
+            .filter(category => category.categoryType !== 'saving')
+            .map(category => (
+                <CategoryCard 
+                    key={category.id} 
+                    category={category}
+                    allMonthlyExpense={{
+                        janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, 
+                        junExpenses, julExpenses, augExpenses, sepExpenses, octExpenses, 
+                        novExpenses, decExpenses
+                    }}
+                    onEdit={handleEditCategory}
+                    onPress={handleShowDetails}
+                    currentMonth={currentMonth}
+                />
             ))}
             <TouchableOpacity style={styles.addButton} onPress={handleOpenAddCategoryModal}>
                 <Text style={styles.addButtonText}>+</Text>

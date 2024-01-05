@@ -10,7 +10,27 @@ import EditAccount from '../components/account/EditAccount';
 import AccountDetails from '../components/account/AccountDetails';
 
 const Accounts = () => {
-    const { user, refreshPage, setRefreshPage, thisMonthExpense } = useContext(GlobalContext);
+    const {
+        user, updateUser, 
+        refreshPage, setRefreshPage,
+        allCategories, setAllCategories,
+        allAccounts, setAllAccounts,
+        currentYear, setCurrentYear,
+        currentMonth, setCurrentMonth,
+        janExpenses, 
+        febExpenses, 
+        marExpenses, 
+        aprExpenses, 
+        mayExpenses, 
+        junExpenses, 
+        julExpenses, 
+        augExpenses, 
+        sepExpenses, 
+        octExpenses, 
+        novExpenses,
+        decExpenses,
+        updateMonthlyExpenses
+    } = useContext(GlobalContext);    
     const [accounts, setAccounts] = useState([]);
 
     useEffect(() => {
@@ -70,9 +90,23 @@ const Accounts = () => {
                 <AccountCard 
                     key={account.id} 
                     account={account} 
-                    thisMonthExpense={thisMonthExpense} 
+                    allMonthlyExpense={{
+                        janExpenses, 
+                        febExpenses, 
+                        marExpenses, 
+                        aprExpenses, 
+                        mayExpenses, 
+                        junExpenses, 
+                        julExpenses, 
+                        augExpenses, 
+                        sepExpenses, 
+                        octExpenses, 
+                        novExpenses,
+                        decExpenses,
+                    }} 
                     onEdit={handleEditAccount}
                     onPress={handleAccountPress}
+                    currentMonth={currentMonth}
                 />
             ))}
             <TouchableOpacity style={styles.addButton} onPress={handleOpenAddAccountModal}>

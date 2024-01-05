@@ -3,13 +3,13 @@ import { collection, query, where, getDocs, addDoc, doc, updateDoc, deleteDoc, o
 
 const ExpenseService = {
     // Function to get the reference to the expense subcollection for a specific year
-    getExpenseCollectionRef: (userId, year) => {
+    getExpenseCollectionRef: function(userId, year) {
         return collection(firestore, `users/${userId}/expenses/${year}/expenses`);
     },
 
     // Subscribe to live updates of expenses for a specific year
     getExpensesLive: (userId, year, onExpensesUpdate) => {
-        const expenseCollectionRef = this.getExpenseCollectionRef(userId, year);
+        const expenseCollectionRef = ExpenseService.getExpenseCollectionRef(userId, year);;
 
         return onSnapshot(expenseCollectionRef, (querySnapshot) => {
             const expenses = [];
@@ -23,7 +23,7 @@ const ExpenseService = {
 
     // Create a new expense in a specific year
     createExpense: async (userId, year, expenseData) => {
-        const expenseCollectionRef = this.getExpenseCollectionRef(userId, year);
+        const expenseCollectionRef = ExpenseService.getExpenseCollectionRef(userId, year);
         try {
             const docRef = await addDoc(expenseCollectionRef, expenseData);
             return docRef.id; // Return the new expense ID
@@ -35,7 +35,7 @@ const ExpenseService = {
     // Get all expenses for a user in a specific year
     getExpenses: async (userId, year) => {
         const expenses = [];
-        const expenseCollectionRef = this.getExpenseCollectionRef(userId, year);
+        const expenseCollectionRef = ExpenseService.getExpenseCollectionRef(userId, year);
         try {
             const querySnapshot = await getDocs(expenseCollectionRef);
             querySnapshot.forEach((doc) => {

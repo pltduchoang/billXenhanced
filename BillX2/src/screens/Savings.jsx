@@ -35,17 +35,32 @@ const Savings = () => {
         <ScrollView style={styles.container}>
             <Text style={styles.title}>Savings</Text>
             {savingsCategories.map(category => (
-                <SavingsCategoryCard key={category.id} category={category} type="saving" onLongPress={handleLongPress} />
+                <SavingsCategoryCard 
+                    key={category.id} 
+                    category={category} 
+                    type="saving" 
+                    onLongPress={() => handleLongPress(category)}
+                />
             ))}
 
             <Text style={styles.title}>Budget</Text>
             {budgetCategories.map(category => (
-                <SavingsCategoryCard key={category.id} category={category} type="budget" onLongPress={handleLongPress} />
+                <SavingsCategoryCard 
+                    key={category.id} 
+                    category={category} 
+                    type="budget" 
+                    onLongPress={() => handleLongPress(category)}
+                />
             ))}
 
             <Text style={styles.title}>Others</Text>
             {otherCategories.map(category => (
-                <SavingsCategoryCard key={category.id} category={category} type="other" onLongPress={handleLongPress}/>
+                <SavingsCategoryCard 
+                    key={category.id} 
+                    category={category} 
+                    type="other" 
+                    onLongPress={() => handleLongPress(category)}
+                />
             ))}
 
             {selectedCategory && (

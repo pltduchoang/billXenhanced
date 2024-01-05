@@ -6,12 +6,14 @@ import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import ExpenseService from '../../services/ExpenseService';
 import { GlobalContext } from '../../context/GlobalContext';
 import storage from '@react-native-firebase/storage';
+import { set } from 'firebase/database';
 
 
 const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData }) => {
     const [amount, setAmount] = useState(expenseData?.amount.toString() || '');
     const [type, setType] = useState(expenseData?.type || 'spend');
     const [time, setTime] = useState(expenseData ? new Date(expenseData.time) : new Date());
+    const [oldTime, setOldTime] = useState(null);
     const [description, setDescription] = useState(expenseData?.description || '');
     const [image, setImage] = useState(expenseData?.imageLink ? { uri: expenseData.imageLink } : null);
     const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
@@ -27,7 +29,6 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
 
     useEffect(() => {
         setIsLoading(true);
-        console.log('Expense Data ToEdit at loading:', expenseData);
         if (expenseData) {
             setAmount(expenseData.amount.toString());
             setType(expenseData.type);
@@ -36,6 +37,7 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
             setImage(expenseData.imageLink ? { uri: expenseData.imageLink } : null);
             setSelectedCategoryId(expenseData.categoryId || '');
             setSelectedAccountId(expenseData.accountId || '');
+            setOldTime(new Date(expenseData.time));
         }
         setIsLoading(false);
     }, [expenseData]);
@@ -93,9 +95,18 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
             categoryId: selectedCategoryId,
             accountId: selectedAccountId,
         };
-        // Call the update function from your ExpenseService
-        await ExpenseService.updateExpense(user.uid, expenseData.id, updatedExpense);
-        console.log('Updated Expense:', updatedExpense);
+        // check if the old year and new year are the same
+        const oldYear = oldTime && oldTime.getFullYear();
+        const newYear = time.getFullYear();
+        if (oldYear !== newYear) {
+            // delete the old expense
+            await ExpenseService.deleteExpense(user.uid, oldYear ,expenseData.id);
+            // create the new expense
+            await ExpenseService.createExpense(user.uid, newYear, updatedExpense);
+        } else {
+            // update the expense
+            await ExpenseService.updateExpense(user.uid, newYear, expenseData.id, updatedExpense);
+        };
         setIsLoading(false);
         setRefreshPage(refreshPage + 1); // Refresh the page
         onClose(); // Close the modal
@@ -330,6 +341,7 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
     );
 };
 
+
 const styles = StyleSheet.create({
     modalView: {
         flex: 1,
@@ -432,5 +444,6 @@ const styles = StyleSheet.create({
         fontSize: 16,
     },
 });
+
 
 export default EditExpense;

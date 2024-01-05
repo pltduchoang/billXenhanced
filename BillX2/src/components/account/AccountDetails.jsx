@@ -7,18 +7,64 @@ import ExpenseDetailModal from '../dashboard/ExpenseDetailModal';
 import EditExpense from '../dashboard/EditExpense';
 
 const AccountDetails = ({ isVisible, onClose, account }) => {
-    const { thisMonthExpense, lastMonthExpense, allCategories, allAccounts } = useContext(GlobalContext);
+    const { 
+        janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, junExpenses, 
+        julExpenses, augExpenses, sepExpenses, octExpenses, novExpenses, decExpenses, 
+        currentMonth, allCategories, allAccounts 
+    } = useContext(GlobalContext);
+
+    const [collapsedMonths, setCollapsedMonths] = useState({
+        jan: true, feb: true, mar: true, apr: true, may: true, jun: true,
+        jul: true, aug: true, sep: true, oct: true, nov: true, dec: true,
+    });
+
     const [selectedExpenseForDetail, setSelectedExpenseForDetail] = useState(null);
     const [isDetailModalVisible, setIsDetailModalVisible] = useState(false);
     const [selectedExpenseForEdit, setSelectedExpenseForEdit] = useState(null);
     const [isEditModalVisible, setIsEditModalVisible] = useState(false);
 
-    const filterExpensesByAccountId = (expenses, accountId) => {
-        return expenses.filter(expense => expense.accountId === accountId);
-    };
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                        'July', 'August', 'September', 'October', 'November', 'December'];
+    const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+    const monthlyExpenses = [janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, junExpenses, 
+                             julExpenses, augExpenses, sepExpenses, octExpenses, novExpenses, decExpenses];
 
-    const thisMonthAccountExpenses = filterExpensesByAccountId(thisMonthExpense, account.id);
-    const lastMonthAccountExpenses = filterExpensesByAccountId(lastMonthExpense, account.id);
+    const renderExpensesForMonth = (expenses, monthName, monthKey) => {
+        const isCurrentMonth = currentMonth === monthKey;
+        const monthDisplayName = isCurrentMonth ? `${monthName} (This Month)` : monthName;
+
+        const monthAccountExpenses = expenses.filter(expense => expense.accountId === account.id);
+        const totalSpending = monthAccountExpenses.reduce((total, expense) => {
+            return expense.type === 'spend' ? total + expense.amount : total - expense.amount;
+        }, 0);
+
+        const toggleCollapse = () => {
+            setCollapsedMonths(prev => ({ ...prev, [monthKey]: !prev[monthKey] }));
+        };
+
+        return (
+            <View key={monthKey}>
+                <TouchableOpacity style={styles.monthHeader} onPress={toggleCollapse}>
+                    <Text style={styles.monthName}>{monthDisplayName}</Text>
+                    <Text style={styles.totalSpending}>Total Spending: ${totalSpending.toFixed(2)}</Text>
+                </TouchableOpacity>
+                {!collapsedMonths[monthKey] && (
+                    monthAccountExpenses.length > 0 ? (
+                        monthAccountExpenses.map(expense => (
+                            <ExpenseCard 
+                                key={expense.id} 
+                                expense={expense}
+                                onEdit={() => handleExpenseLongPress(expense)}
+                                onDetails={() => handleExpensePress(expense)}
+                            />
+                        ))
+                    ) : (
+                        <Text style={styles.noDataText}>No expenses in {monthName}.</Text>
+                    )
+                )}
+            </View>
+        );
+    };
 
     const handleExpensePress = (expense) => {
         setSelectedExpenseForDetail(expense);
@@ -38,40 +84,12 @@ const AccountDetails = ({ isVisible, onClose, account }) => {
         >
             <View style={styles.modalView}>
                 <Text style={styles.title}>{account.accountName} Details</Text>
-                
                 <ScrollView>
-                    {/* This Month's Expenses */}
-                    <Text style={styles.sectionTitle}>This Month's Expenses</Text>
-                    {thisMonthAccountExpenses.length > 0 ?
-                        thisMonthAccountExpenses.map(expense => (
-                            <ExpenseCard 
-                                key={expense.id} 
-                                expense={expense}
-                                onEdit={() => handleExpenseLongPress(expense)}
-                                onDetails={() => handleExpensePress(expense)}
-                            />
-                        )) : <Text style={styles.noDataText}>No expenses this month.</Text>
-                    }
-
-                    {/* Last Month's Expenses */}
-                    <Text style={styles.sectionTitle}>Last Month's Expenses</Text>
-                    {lastMonthAccountExpenses.length > 0 ?
-                        lastMonthAccountExpenses.map(expense => (
-                            <ExpenseCard 
-                                key={expense.id} 
-                                expense={expense}
-                                onEdit={() => handleExpenseLongPress(expense)}
-                                onDetails={() => handleExpensePress(expense)}
-                            />
-                        )) : <Text style={styles.noDataText}>No expenses last month.</Text>
-                    }
+                    {monthNames.map((monthName, index) => renderExpensesForMonth(monthlyExpenses[index], monthName, monthKeys[index]))}
                 </ScrollView>
-
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
                     <Text style={styles.buttonText}>Close</Text>
                 </TouchableOpacity>
-
-                {/* Expense Detail Modal */}
                 {selectedExpenseForDetail && (
                     <ExpenseDetailModal
                         isVisible={isDetailModalVisible}
@@ -79,8 +97,6 @@ const AccountDetails = ({ isVisible, onClose, account }) => {
                         expense={selectedExpenseForDetail}
                     />
                 )}
-
-                {/* Edit Expense Modal */}
                 {selectedExpenseForEdit && (
                     <EditExpense
                         isVisible={isEditModalVisible}
@@ -94,6 +110,7 @@ const AccountDetails = ({ isVisible, onClose, account }) => {
         </Modal>
     );
 };
+
 const styles = StyleSheet.create({
     modalView: {
         flex: 1,
@@ -103,15 +120,23 @@ const styles = StyleSheet.create({
     title: {
         fontSize: 20,
         fontWeight: 'bold',
-        marginBottom: 50,
         color: '#DDF2FD',
         textAlign: 'center',
     },
-    sectionTitle: {
+    monthHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        padding: 10,
+        backgroundColor: '#427D9D',
+    },
+    monthName: {
+        color: '#DDF2FD',
         fontSize: 18,
         fontWeight: 'bold',
-        marginTop: 15,
+    },
+    totalSpending: {
         color: '#DDF2FD',
+        fontSize: 16,
     },
     noDataText: {
         fontSize: 16,

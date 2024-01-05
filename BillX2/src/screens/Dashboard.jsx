@@ -1,46 +1,74 @@
 // src/screens/Dashboard.jsx
 import React, { useEffect, useState, useContext } from 'react';
-import { ScrollView ,View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, TouchableOpacity, StyleSheet, SafeAreaView, ActivityIndicator } from 'react-native';
 import { GlobalContext } from '../context/GlobalContext';
 import ExpenseService from '../services/ExpenseService';
-import ExpenseCard from '../components/dashboard/ExpenseCard'; // Adjust the path as necessary
-import CategoryService from '../services/CategoryService'; // Import CategoryService
-import AccountService from '../services/AccountService'; // Import AccountService
-import AddExpense from '../components/dashboard/AddExpense'
+import ExpenseCard from '../components/dashboard/ExpenseCard';
+import CategoryService from '../services/CategoryService';
+import AccountService from '../services/AccountService';
+import AddExpense from '../components/dashboard/AddExpense';
 import EditExpense from '../components/dashboard/EditExpense';
 import ExpenseDetailModal from '../components/dashboard/ExpenseDetailModal';
 
+import { LineChart } from 'react-native-chart-kit';
+import { Dimensions } from 'react-native';
+
+
 const Dashboard = () => {
-    const [allExpenses, setAllExpenses] = useState([]);
-    const [thisMonthExpenses, setThisMonthExpenses] = useState([]);
-    const [lastMonthExpenses, setLastMonthExpenses] = useState([]);
-
-
-    const [isLoading, setIsLoading] = useState(true);
-    const [showThisMonth, setShowThisMonth] = useState(false);
-    const [showLastMonth, setShowLastMonth] = useState(false);
-    // Access global context
-    const { 
-        user, refreshPage, 
+    const { user, updateUser, 
+        refreshPage, setRefreshPage,
         allCategories, setAllCategories,
         allAccounts, setAllAccounts,
-        updateThisMonthExpense, updateLastMonthExpense
-    } = useContext(GlobalContext);
+        currentYear, setCurrentYear,
+        currentMonth, setCurrentMonth,
+        janExpenses, 
+        febExpenses, 
+        marExpenses, 
+        aprExpenses, 
+        mayExpenses, 
+        junExpenses, 
+        julExpenses, 
+        augExpenses, 
+        sepExpenses, 
+        octExpenses, 
+        novExpenses,
+        decExpenses,
+        updateMonthlyExpenses } = useContext(GlobalContext);
+
+    const [showExpenseLog, setShowExpenseLog] = useState(false);
+
+    const [isLoading, setIsLoading] = useState(true);
+
 
     useEffect(() => {
         const fetchExpensesAndCategories = async () => {
             setIsLoading(true);
-    
+
             if (user && user.uid) {
                 try {
-                    // Fetch expenses
-                    const expenses = await ExpenseService.getExpenses(user.uid);
-                    setAllExpenses(expenses);
+                    // Fetch expenses for the current year
+                    const yearExpenses = await ExpenseService.getExpenses(user.uid, currentYear);
+    
+                    // Initialize an object to hold expenses for each month
+                    const monthlyExpenses = {
+                        0: [], 1: [], 2: [], 3: [], 4: [], 5: [], 6: [], 7: [], 8: [], 9: [], 10: [], 11: []
+                    };
 
-                    //check and create default category
+                    // Group expenses by month
+                    yearExpenses.forEach(expense => {
+                        const expenseMonth = new Date(expense.time).getMonth();
+                        monthlyExpenses[expenseMonth].push(expense);
+                    });
+    
+                    // Update state for each month
+                    Object.entries(monthlyExpenses).forEach(([month, expenses]) => {
+                        updateMonthlyExpenses(parseInt(month), expenses);
+                    });
+
+                    // check and create default category
                     await checkAndCreateDefaultCategory(user.uid);
 
-                    //check and create default account
+                    // check and create default account
                     await checkAndCreateDefaultAccount(user.uid);
 
                     // Fetch and set categories and accounts
@@ -49,15 +77,17 @@ const Dashboard = () => {
                     
                     const fetchedAccounts = await AccountService.getAccounts(user.uid);
                     setAllAccounts(fetchedAccounts.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt)));
+
                 } catch (error) {
                     console.error("Error fetching data: ", error);
                 }
                 setIsLoading(false);
             }
         };
-    
+
         fetchExpensesAndCategories();
-    }, [user, refreshPage]);
+    }, [user, refreshPage, currentYear]);
+
 
     // Function to create a default category if none exist
     const checkAndCreateDefaultCategory = async (userId) => {
@@ -83,31 +113,6 @@ const Dashboard = () => {
         }
     };
     
-
-    useEffect(() => {
-        const now = new Date();
-        const thisMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
-        const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-        const nextMonthStart = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-    
-        const filterExpensesForThisMonth = allExpenses.filter(expense => {
-            const expenseDate = new Date(expense.time);
-            return expenseDate >= thisMonthStart && expenseDate < nextMonthStart;
-        });
-    
-        const filterExpensesForLastMonth = allExpenses.filter(expense => {
-            const expenseDate = new Date(expense.time);
-            return expenseDate >= lastMonthStart && expenseDate < thisMonthStart;
-        });
-    
-        setThisMonthExpenses(filterExpensesForThisMonth);
-        setLastMonthExpenses(filterExpensesForLastMonth);
-        updateThisMonthExpense(filterExpensesForThisMonth);
-        updateLastMonthExpense(filterExpensesForLastMonth);
-        setIsLoading(false);
-    }, [allExpenses]);
-
-
 
     const [isAddExpenseModalVisible, setIsAddExpenseModalVisible] = useState(false);
     const handleAddButtonPress = () => {
@@ -138,101 +143,180 @@ const Dashboard = () => {
     };
 
 
+    // State to track collapsed months
+    const initialCollapsedMonthsState = {
+        jan: true, feb: true, mar: true, apr: true, may: true, jun: true,
+        jul: true, aug: true, sep: true, oct: true, nov: true, dec: true,
+    };
+    
+
+    const getMonthKey = (monthNumber) => {
+        const monthKeys = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'];
+        return monthKeys[monthNumber];
+    };
+    const currentMonthKey = getMonthKey(currentMonth); // Convert to 'jan', 'feb', etc.
+    initialCollapsedMonthsState[currentMonthKey] = false;
+
+    const [collapsedMonths, setCollapsedMonths] = useState(initialCollapsedMonthsState);
+
+    //CHART
+    const screenWidth = Dimensions.get("window").width;
+
+    // Example data and labels (replace with actual data)
+    const data = {
+        labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"],
+        datasets: [
+            {
+                data: [janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, junExpenses, julExpenses, augExpenses, sepExpenses, octExpenses, novExpenses, decExpenses].map(expenseArray => expenseArray.reduce((total, expense) => {
+                    return expense.type === 'spend' ? total + expense.amount : total - expense.amount;
+                    }, 0)),
+                color: (opacity = 1) => `rgba(221, 242, 253, ${opacity})`, // optional
+                strokeWidth: 2 // optional
+            }
+        ],
+        legend: ["Monthly Expenses"] // optional
+    };
+
+    const chartConfig = {
+        backgroundColor: '#427D9D',
+        backgroundGradientFrom: '#427D9D',
+        backgroundGradientTo: '#427D9D',
+        decimalPlaces: 2, // optional, defaults to 2dp
+        color: (opacity = 1) => `rgba(221, 242, 253, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(221, 242, 253, ${opacity})`,
+        style: {
+            borderRadius: 16
+        },
+        propsForDots: {
+            r: "6",
+            strokeWidth: "2",
+            stroke: "#ffa726"
+        }
+    };
+
+    const renderExpensesForMonth = (expenses, monthName, monthKey) => {
+        // Sort expenses in descending order based on the date
+        const sortedExpenses = expenses.slice().sort((a, b) => new Date(b.time) - new Date(a.time));
+        const isCurrentMonth = getMonthKey(currentMonth) === monthKey;
+        const monthDisplayName = isCurrentMonth ? `${monthName} (Current month)` : monthName;
+        const totalSpending = sortedExpenses.reduce((total, expense) => {
+            return expense.type === 'spend' ? total + expense.amount : total - expense.amount;
+        }, 0);
+        const toggleCollapse = () => {
+            setCollapsedMonths(prev => {
+                const newCollapsedMonths = { ...prev, [monthKey]: !prev[monthKey] };
+                return newCollapsedMonths;
+            });
+        };
+    
+        return (
+            <View key={monthKey}>
+                
+                <TouchableOpacity style={styles.monthHeader} onPress={toggleCollapse}>
+                    <Text style={styles.monthName}>{monthDisplayName}</Text>
+                    <Text style={styles.totalSpending}>${totalSpending.toFixed(2)}</Text>
+                </TouchableOpacity>
+                {!collapsedMonths[monthKey] && (
+                    sortedExpenses.length > 0 ? (
+                        sortedExpenses.map(expense => (
+                            <ExpenseCard 
+                                key={expense.id} 
+                                expense={expense} 
+                                categoryList={allCategories}
+                                accountList={allAccounts}
+                                onEdit={handleEditExpense} 
+                                onDetails={handleDetail}
+                            />
+                        ))
+                    ) : (
+                        <Text style={styles.noDataText}>No expenses in {monthName}.</Text>
+                    )
+                )}
+            </View>
+        );
+    };
+
+
+    //CHART
+
+
+
 
     return (
         isLoading ? (
-            <View style={{ flex: 1, justifyContent: 'center' }}>
+            <View style={[styles.container, {justifyContent:'center'}]}>
                 <ActivityIndicator size="large" color="#DDF2FD" />
                 <Text style={styles.loadingText}>Loading...</Text>
             </View>
         ) : (
-        <SafeAreaView style={styles.container}>
-            <ScrollView >
-                <Text style={styles.title}>Dashboard</Text>
-
-                {/* This Month's Expenses */}
-                <TouchableOpacity style={styles.sectionTitle} onPress={() => setShowThisMonth(!showThisMonth)}>
-                    <Text style={styles.sectionText}>This Month's Expenses</Text>
-                </TouchableOpacity>
-                {showThisMonth ? (
-                    <View>
-                        {thisMonthExpenses.length > 0 ? (
-                            thisMonthExpenses.map(expense => (
-                                <ExpenseCard 
-                                    key={expense.id} 
-                                    expense={expense} 
-                                    categoryList={allCategories}
-                                    accountList={allAccounts}
-                                    onEdit={handleEditExpense} 
-                                    onDetails={handleDetail}
-                                />
-                            ))
-                        ) : (
-                            <Text style={styles.noDataText}>No expenses this month.</Text>
-                        )}
+            <SafeAreaView style={styles.container}>
+                <ScrollView >
+                    <View style={styles.chartContainer}>
+                        {/* chart */}
+                
+                        <LineChart
+                            data={data}
+                            width={screenWidth}
+                            height={220}
+                            chartConfig={chartConfig}
+                            bezier // This prop makes the line chart curved
+                            style={{
+                                marginVertical: 8,
+                                borderRadius: 16
+                            }}
+                        />
                     </View>
-                ) : (
-                    <></>
-                )}
+                    <Text style={styles.title}>Dashboard</Text>
+                   
+                    <TouchableOpacity onPress={() => setShowExpenseLog(!showExpenseLog)}>
+                        <Text style={styles.sectionText}>Expense Log</Text>
+                    </TouchableOpacity>
+                    {showExpenseLog && (
+                        <View>
+                            {renderExpensesForMonth(decExpenses, 'December', 'dec')}
+                            {renderExpensesForMonth(novExpenses, 'November', 'nov')}
+                            {renderExpensesForMonth(octExpenses, 'October', 'oct')}
+                            {renderExpensesForMonth(sepExpenses, 'September', 'sep')}
+                            {renderExpensesForMonth(augExpenses, 'August', 'aug')}
+                            {renderExpensesForMonth(julExpenses, 'July', 'jul')}
+                            {renderExpensesForMonth(junExpenses, 'June', 'jun')}
+                            {renderExpensesForMonth(mayExpenses, 'May', 'may')}
+                            {renderExpensesForMonth(aprExpenses, 'April', 'apr')}
+                            {renderExpensesForMonth(marExpenses, 'March', 'mar')}
+                            {renderExpensesForMonth(febExpenses, 'February', 'feb')}
+                            {renderExpensesForMonth(janExpenses, 'January', 'jan')}
+                        </View>
+                    )}
 
-                {/* Last Month's Expenses */}
-                <TouchableOpacity style={styles.sectionTitle} onPress={() => setShowLastMonth(!showLastMonth)}>
-                    <Text style={styles.sectionText}>Last Month's Expenses</Text>
+                    <AddExpense
+                        isVisible={isAddExpenseModalVisible}
+                        onClose={handleCloseModal}
+                        allCategory={allCategories}
+                        allAccount={allAccounts}
+                    />
+
+                    <EditExpense
+                        isVisible={isEditExpenseModalVisible}
+                        onClose={handleCloseModal}
+                        expenseData={expenseDataEdit}
+                        allCategory={allCategories}
+                        allAccount={allAccounts}
+                    />
+
+                    <ExpenseDetailModal
+                        isVisible={isDetailModalVisible}
+                        onClose={() => setIsDetailModalVisible(false)}
+                        expense={selectedExpenseForDetail}
+                    />
+                </ScrollView>
+                <TouchableOpacity 
+                    style={styles.addButton} 
+                    onPress={handleAddButtonPress}
+                    activeOpacity={0.7}
+                >
+                    <Text style={styles.addButtonText}>+</Text>
                 </TouchableOpacity>
-                {showLastMonth ? (
-                    <View>
-                        {lastMonthExpenses.length > 0 ? (
-                            lastMonthExpenses.map(expense => (
-                                <ExpenseCard 
-                                    key={expense.id} 
-                                    expense={expense} 
-                                    categoryList={allCategories}
-                                    accountList={allAccounts}
-                                    onEdit={handleEditExpense} 
-                                    onDetails={handleDetail}
-                                />
-                            ))
-                        ) : (
-                            <Text style={styles.noDataText}>No expenses last month.</Text>
-                        )}
-                    </View>
-                ) : (
-                    <></>
-                )}
-
-                {/* Add Expense Modal */}
-
-                <AddExpense
-                    isVisible={isAddExpenseModalVisible}
-                    onClose={handleCloseModal}
-                    allCategory={allCategories}
-                    allAccount={allAccounts}
-                />
-
-                <EditExpense
-                    isVisible={isEditExpenseModalVisible}
-                    onClose={handleCloseModal}
-                    expenseData={expenseDataEdit}
-                    allCategory={allCategories}
-                    allAccount={allAccounts}
-                />
-
-
-                <ExpenseDetailModal
-                    isVisible={isDetailModalVisible}
-                    onClose={() => setIsDetailModalVisible(false)}
-                    expense={selectedExpenseForDetail}
-                />
-
-            </ScrollView>
-            <TouchableOpacity 
-                style={styles.addButton} 
-                onPress={handleAddButtonPress}
-                activeOpacity={0.7}
-            >
-                <Text style={styles.addButtonText}>+</Text>
-            </TouchableOpacity>
-        </SafeAreaView>
+            </SafeAreaView>
         )
     );
 };
@@ -253,11 +337,15 @@ const styles = StyleSheet.create({
         marginTop: 10,
         padding: 10,
         backgroundColor: '#427D9D',
+        
     },
     sectionText: {
         color: '#DDF2FD',
         fontSize: 20,
         fontWeight: 'bold',
+        backgroundColor: '#427D9D',
+        padding: 10,
+        marginTop: 10,
     },
     noDataText: {
         color: '#DDF2FD',
@@ -289,6 +377,34 @@ const styles = StyleSheet.create({
         color: '#9BBEC8',
         fontSize: 30,
         fontWeight: 'bold',
+    },
+    monthHeader: {
+        flex: 1, 
+        flexDirection: 'row', 
+        justifyContent: 'space-between', 
+        alignItems: 'center',
+        padding: 10,
+        marginTop: 10,
+        // Remove the backgroundColor to have no background for the month title
+    },
+    monthName: {
+        width: '40%',
+        fontSize: 16,
+        color: '#DDF2FD',
+        fontStyle: 'italic',
+    },
+    totalSpending: {
+        width: '60%',
+        textAlign: 'right',
+        fontSize: 16,
+        fontWeight: 'bold',
+        color: '#DDF2FD',
+    },
+    chartContainer: {
+        padding: 20,
+        backgroundColor: '#427D9D',
+        borderRadius: 10,
+        margin: 20,
     },
 });
 
