@@ -1,8 +1,10 @@
 // components/account/EditAccount.jsx
-import React, { useState, useContext, useEffect } from 'react';
+
+import React, { useState, useContext } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { GlobalContext } from '../../context/GlobalContext';
 import AccountService from '../../services/AccountService';
+import AccountIconPicker from './AccountIconPicker'; // Adjust the import path as necessary
 
 const EditAccount = ({ isVisible, onClose, accountData }) => {
     const { user, setRefreshPage } = useContext(GlobalContext);
@@ -10,40 +12,32 @@ const EditAccount = ({ isVisible, onClose, accountData }) => {
     const [accountDescription, setAccountDescription] = useState(accountData.accountDescription);
     const [accountIcon, setAccountIcon] = useState(accountData.accountIcon || '');
 
-    useEffect(() => {
-        // Additional useEffect logic if needed
-    }, []);
-
     const handleSaveAccount = async () => {
         if (user && user.uid && accountName.trim()) {
             const updatedAccount = {
                 accountName,
                 accountDescription,
                 accountIcon,
-                // other account fields if necessary
             };
             await AccountService.updateAccount(user.uid, accountData.id, updatedAccount);
-            setRefreshPage(prev => prev + 1); // Update refreshPage to trigger a refresh
-            onClose(); // Close the modal
+            setRefreshPage(prev => prev + 1);
+            onClose();
         }
     };
 
-    const handleDeleteAccount = async () => {
+    const handleDeleteAccount = () => {
         Alert.alert(
             "Delete Account",
             "Are you sure you want to delete this account?",
             [
-                {
-                    text: "Cancel",
-                    style: "cancel"
-                },
+                { text: "Cancel", style: "cancel" },
                 { 
                     text: "OK", 
                     onPress: async () => {
                         if (user && user.uid) {
                             await AccountService.deleteAccount(user.uid, accountData.id);
-                            setRefreshPage(prev => prev + 1); // Update refreshPage to trigger a refresh
-                            onClose(); // Close the modal
+                            setRefreshPage(prev => prev + 1);
+                            onClose();
                         }
                     }
                 }
@@ -74,12 +68,7 @@ const EditAccount = ({ isVisible, onClose, accountData }) => {
                     onChangeText={setAccountDescription}
                 />
 
-                <TextInput
-                    style={styles.input}
-                    placeholder="Account Icon (URL or name)"
-                    value={accountIcon}
-                    onChangeText={setAccountIcon}
-                />
+                <AccountIconPicker onSelect={setAccountIcon} currentIcon={accountIcon} />
 
                 <View style={styles.buttonRow}>
                     <TouchableOpacity

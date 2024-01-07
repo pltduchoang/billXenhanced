@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Image } from 'react-native';
 import { GlobalContext } from '../context/GlobalContext';
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import { auth } from '../services/Firebase'; // Import auth from your Firebase.js
@@ -29,9 +29,17 @@ const LoginScreen = () => {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.welcomeText}>Welcome to BillX Online</Text>
-            <Text style={styles.welcomeTextSlim}>Your everyday's financial assistance</Text>
-            <Text style={styles.welcomeTextSlim}>Sign in to continue</Text>
+            <Text style={styles.welcomeText}>BillX - Pill for your Xpain</Text>
+            <Text style={styles.welcomeTextSlim}>Track your spending like a PRO</Text>
+            <Text style={styles.welcomeTextSlim}>Anywhere, anytime</Text>
+            
+            
+            <Image
+                source={require('../assets/AppIcon.png')} // Adjust the path as needed
+                style={styles.logo}
+            />
+            
+            
             <TouchableOpacity style={styles.googleSignInButton} onPress={signInWithGoogle}>
                 <Text style={styles.buttonText}>Sign In with Google</Text>
             </TouchableOpacity>
@@ -50,12 +58,13 @@ const styles = StyleSheet.create({
         fontSize: 24,
         fontWeight: 'bold',
         color: '#DDF2FD', // Light text color for contrast
-        marginBottom: 10,
+        marginBottom: 30,
     },
     welcomeTextSlim: {
         fontSize: 20,
         color: '#DDF2FD', // Light text color for contrast
-        marginBottom: 10,
+        marginVertical: 10,
+        fontStyle: 'italic',
     },
     googleSignInButton: {
         backgroundColor: '#427D9D', // Deep blue button
@@ -63,11 +72,17 @@ const styles = StyleSheet.create({
         borderRadius: 5,
         width: '60%',
         alignItems: 'center',
-        marginTop: 200,
+        marginTop: 50,
     },
     buttonText: {
         color: '#DDF2FD', // Light text color for readability
         fontSize: 16,
+    },
+    logo: {
+        width: 300, // Adjust size as needed
+        height: 300, // Adjust size as needed
+        marginVertical: 100,
+        borderRadius: 30,
     },
 });
 

@@ -1,13 +1,14 @@
 // componets/dashboard/AddExpense.jsx
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, alert } from 'react';
 import { ActivityIndicator, Alert, Modal, View, ScrollView, Text, TextInput, TouchableOpacity, Image, StyleSheet } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import { launchCamera, launchImageLibrary } from 'react-native-image-picker';
 import ExpenseService from '../../services/ExpenseService';
 import { GlobalContext } from '../../context/GlobalContext';
 import storage from '@react-native-firebase/storage';
-import { set } from 'firebase/database';
 
+import { getCategoryIcon } from '../iconLibrary/CategoryIconLibrary'
+import { getAccountIcon } from '../iconLibrary/AccountIconLibrary';
 
 const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData }) => {
     const [amount, setAmount] = useState(expenseData?.amount.toString() || '');
@@ -41,6 +42,17 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
         }
         setIsLoading(false);
     }, [expenseData]);
+
+    //Separate Savings category
+    const [savingCategories, setSavingCategories] = useState([]);
+    const [otherCategories, setOtherCategories] = useState([]);
+
+    useEffect(() => {
+        const savingCats = allCategory.filter(category => category.categoryType === 'saving');
+        const otherCats = allCategory.filter(category => category.categoryType !== 'saving');
+        setSavingCategories(savingCats);
+        setOtherCategories(otherCats);
+    }, [allCategory]);
 
 
     const handleConfirm = (date) => {
@@ -84,6 +96,12 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
     // Add logic to handle adding the expense here
     const handleSaveExpense = async () => {
         setIsLoading(true);
+        const selectedCategory = allCategory.find(c => c.id === selectedCategoryId);
+        if (selectedCategory && selectedCategory.categoryType === 'saving' && type !== 'spend') {
+            alert("For 'saving' category, the type must be 'spend'");
+            setIsLoading(false);
+            return;
+        }
         const imageUrl = image && image.uri !== expenseData.imageLink ? await uploadImage(image) : expenseData.imageLink;
     
         const updatedExpense = {
@@ -188,7 +206,7 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
             }
     
             // Then delete the expense object
-            await ExpenseService.deleteExpense(user.uid, expenseData.id);
+            await ExpenseService.deleteExpense(user.uid, oldTime.getFullYear()  ,expenseData.id);
             console.log('Expense Deleted');
     
             setRefreshPage(refreshPage + 1); // Refresh the page
@@ -230,91 +248,141 @@ const EditExpense = ({ isVisible, onClose, allCategory, allAccount, expenseData 
                         <ScrollView>
                             <Text style={styles.title}>Edit Expense</Text>
 
-                            <Text style={styles.sectionTitle}>Amount</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Amount"
-                                keyboardType="numeric"
-                                value={amount}
-                                onChangeText={handleAmountChange}
-                            />
-
-                            <Text style={styles.sectionTitle}>Type</Text>
-                            <View style={styles.buttonRow}>
-                                <TouchableOpacity style={type === 'spend' ? styles.activeButton : styles.button} onPress={() => setType('spend')}>
-                                    <Text style={styles.buttonText}>Spend</Text>
-                                </TouchableOpacity>
-                                <TouchableOpacity style={type === 'income' ? styles.activeButton : styles.button} onPress={() => setType('income')}>
-                                    <Text style={styles.buttonText}>Income</Text>
-                                </TouchableOpacity>
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Amount</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Amount"
+                                    keyboardType="numeric"
+                                    value={amount}
+                                    onChangeText={handleAmountChange}
+                                />
+                            </View>
+                            
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Type</Text>
+                                <View style={styles.buttonRow}>
+                                    <TouchableOpacity style={type === 'spend' ? styles.activeButton : styles.button} onPress={() => setType('spend')}>
+                                        <Text style={styles.buttonText}>Spend</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={type === 'income' ? styles.activeButton : styles.button} onPress={() => setType('income')}>
+                                        <Text style={styles.buttonText}>Income</Text>
+                                    </TouchableOpacity>
+                                </View>
                             </View>
 
-
-                            <Text style={styles.sectionTitle}>Time</Text>
-                            <TouchableOpacity onPress={() => setDatePickerVisibility(true)}>
-                                <Text style={styles.dateText}>Select Time: {time.toLocaleString()}</Text>
-                            </TouchableOpacity>
-                            <DateTimePickerModal
-                                isVisible={isDatePickerVisible}
-                                mode="datetime"
-                                onConfirm={handleConfirm}
-                                onCancel={() => setDatePickerVisibility(false)}
-                            />
-
-                            <Text style={styles.sectionTitle}>Image</Text>
-                            <View style={styles.buttonRow}>
-                                <TouchableOpacity style={styles.button} onPress={handleLaunchCamera}>
-                                    <Text style={styles.buttonText}>Camera</Text>
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Time</Text>
+                                <TouchableOpacity onPress={() => setDatePickerVisibility(true)}>
+                                    <Text style={styles.dateText}>Select Time: {time.toLocaleString()}</Text>
                                 </TouchableOpacity>
-                                <TouchableOpacity style={styles.button} onPress={handleLaunchImageLibrary}>
-                                    <Text style={styles.buttonText}>Gallery</Text>
-                                </TouchableOpacity>
+                                <DateTimePickerModal
+                                    isVisible={isDatePickerVisible}
+                                    mode="datetime"
+                                    onConfirm={handleConfirm}
+                                    onCancel={() => setDatePickerVisibility(false)}
+                                />
                             </View>
 
-                            {image && (
-                                <TouchableOpacity style={styles.image}>
-                                    <Image
-                                        source={{ uri: image.uri }}
-                                        style={{ width: 400, height: 400, margin: 10 }}
-                                    />
-                                </TouchableOpacity>
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Image</Text>
+                                <View style={styles.buttonRow}>
+                                    <TouchableOpacity style={styles.button} onPress={handleLaunchCamera}>
+                                        <Text style={styles.buttonText}>Camera</Text>
+                                    </TouchableOpacity>
+                                    <TouchableOpacity style={styles.button} onPress={handleLaunchImageLibrary}>
+                                        <Text style={styles.buttonText}>Gallery</Text>
+                                    </TouchableOpacity>
+                                </View>
+                                {image && (
+                                    <TouchableOpacity style={styles.image}>
+                                        <Image
+                                            source={{ uri: image.uri }}
+                                            style={{ width: 400, height: 400, margin: 10 }}
+                                        />
+                                    </TouchableOpacity>
+                                )}
+                                {!image && (
+                                    <Text style={styles.sectionTitle}>No Image Selected</Text>
+                                )
+                                }
+                            </View>
+
+                            
+
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Description</Text>
+                                <TextInput
+                                    style={styles.input}
+                                    placeholder="Description"
+                                    keyboardType="default"
+                                    value={description}
+                                    onChangeText={(text) => setDescription(text)}
+                                />
+                            </View>
+
+                            {savingCategories.length > 0 && (
+                                <View style={styles.sectionFrame}>
+                                    <Text style={styles.sectionTitle}>Saving Category</Text>
+                                    <View style={styles.buttonGroup}>
+                                        {savingCategories.map(category => (
+                                            <TouchableOpacity
+                                                key={category.id}
+                                                style={selectedCategoryId === category.id ? styles.activeButton : styles.button}
+                                                onPress={() => setSelectedCategoryId(category.id)}
+                                            >
+                                                <View style={styles.buttonIconHolder}>
+                                                    <Text style={styles.buttonTextIcon}>{category.categoryName}</Text>
+                                                    <View style={styles.icon}>
+                                                        {getCategoryIcon(category.categoryIcon, 30, '#DDF2FD')}
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                </View>
                             )}
 
+                            {otherCategories.length > 0 && (
+                                <View style={styles.sectionFrame}>
+                                    <Text style={styles.sectionTitle}>Other Categories</Text>
+                                    <View style={styles.buttonGroup}>
+                                        {otherCategories.map(category => (
+                                            <TouchableOpacity
+                                                key={category.id}
+                                                style={selectedCategoryId === category.id ? styles.activeButton : styles.button}
+                                                onPress={() => setSelectedCategoryId(category.id)}
+                                            >
+                                                <View style={styles.buttonIconHolder}>
+                                                    <Text style={styles.buttonTextIcon}>{category.categoryName}</Text>
+                                                    <View style={styles.icon}>
+                                                        {getCategoryIcon(category.categoryIcon, 30, '#DDF2FD')}
+                                                    </View>
+                                                </View>
+                                            </TouchableOpacity>
+                                        ))}
+                                    </View>
+                                </View>
+                            )}
 
-                            <Text style={styles.sectionTitle}>Description</Text>
-                            <TextInput
-                                style={styles.input}
-                                placeholder="Description"
-                                keyboardType="default"
-                                value={description}
-                                onChangeText={(text) => setDescription(text)}
-                            />
-
-
-                            <Text style={styles.sectionTitle}>Category</Text>
-                            <View style={styles.buttonGroup}>
-                                {allCategory.map(category => (
-                                    <TouchableOpacity
-                                        key={category.id}
-                                        style={selectedCategoryId === category.id ? styles.activeButton : styles.button}
-                                        onPress={() => setSelectedCategoryId(category.id)}
-                                    >
-                                        <Text style={styles.buttonText}>{category.categoryName}</Text>
-                                    </TouchableOpacity>
-                                ))}
-                            </View>
-
-                            <Text style={styles.sectionTitle}>Account</Text>
-                            <View style={styles.buttonGroup}>
-                                {allAccount.map(account => (
-                                    <TouchableOpacity
-                                        key={account.id}
-                                        style={selectedAccountId === account.id ? styles.activeButton : styles.button}
-                                        onPress={() => setSelectedAccountId(account.id)}
-                                    >
-                                        <Text style={styles.buttonText}>{account.accountName}</Text>
-                                    </TouchableOpacity>
-                                ))}
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Account</Text>
+                                <View style={styles.buttonGroup}>
+                                    {allAccount.map(account => (
+                                        <TouchableOpacity
+                                            key={account.id}
+                                            style={selectedAccountId === account.id ? styles.activeButton : styles.button}
+                                            onPress={() => setSelectedAccountId(account.id)}
+                                        >
+                                            <View style={styles.buttonIconHolder}>
+                                                <Text style={styles.buttonTextIcon}>{account.accountName}</Text>
+                                                <View style={styles.icon}>
+                                                    {getAccountIcon(account.accountIcon, 30, '#DDF2FD')}
+                                                </View>
+                                            </View>
+                                        </TouchableOpacity>
+                                    ))}
+                                </View>
                             </View>
 
 
@@ -348,7 +416,7 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
         alignItems: 'center',
         backgroundColor: 'white',
-        padding: 30,
+        padding: 0,
         backgroundColor: '#164863',
     },
     title: {
@@ -367,6 +435,8 @@ const styles = StyleSheet.create({
         width: '90%',
         backgroundColor: '#427D9D',
         marginBottom: 50,
+        color: '#DDF2FD',
+        borderRadius: 5,
     },
     button: {
         backgroundColor: '#427D9D',
@@ -396,34 +466,43 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '100%',
-        marginBottom: 50,
+        marginBottom: 30,
     },
     buttonRowEnd: {
         flexDirection: 'row',
         justifyContent: 'space-around',
         width: '100%',
-        marginTop: 100,
     },
     buttonGroup: {
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-around',
         width: '100%',
-        marginVertical: 10,
-        borderWidth: 1,
-        borderRadius: 5,
-        borderColor: '#9BBEC8',
+        marginBottom: 20,
     },
     dateText: {
         margin: 30,
         fontSize: 20,
         color: '#9BBEC8',
     },
+    sectionFrame: {
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#9BBEC8',
+        marginBottom: 50,
+        marginHorizontal: 16,
+        paddingTop: 30,
+        position: 'relative',
+    },
     sectionTitle: {
         fontSize: 20,
         fontWeight: 'bold',
         color: '#9BBEC8',
-        margin: 10,
+        position: 'absolute',
+        top: -25,
+        left: 10,
+        paddingHorizontal: 10,
+        backgroundColor: '#164863',
     },
     image: {
         alignItems: 'center',
@@ -442,6 +521,22 @@ const styles = StyleSheet.create({
     deleteButtonText: {
         color: '#FFFFFF',
         fontSize: 16,
+    },
+    buttonIconHolder: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    buttonTextIcon: {
+        flex:8,
+        color: '#DDF2FD',
+        fontSize: 16,
+        marginRight: 10,
+    },
+    icon: {
+        flex: 2,
+        width: 30,
+        height: 30,
     },
 });
 

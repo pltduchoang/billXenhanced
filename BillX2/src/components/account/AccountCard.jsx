@@ -1,7 +1,9 @@
 // src/components/account/AccountCard.jsx
 
-import React from 'react';
+import React, {useEffect , useState} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import {getAccountIcon} from '../iconLibrary/AccountIconLibrary'; // Import the icon library
+
 
 const AccountCard = ({ account, allMonthlyExpense, onEdit, onPress, currentMonth }) => {
     // Helper function to calculate total expenses for a given month
@@ -33,12 +35,21 @@ const AccountCard = ({ account, allMonthlyExpense, onEdit, onPress, currentMonth
         onPress(account);
     };
 
+
+
     return (
         <TouchableOpacity style={styles.card} onLongPress={handleLongPress} onPress={handlePress}>
-            <Text style={styles.accountName}>{account.accountName}</Text>
-            <Text style={styles.accountDescription}>{account.accountDescription}</Text>
-            <Text style={styles.sumText}>This Month total: ${currentMonthTotal.toFixed(2)}</Text>
-            <Text style={styles.sumText}>Year to Date: ${yearToDateTotal.toFixed(2)}</Text>
+            <View style={styles.contentWrapper}>
+                <View style={styles.textWrapper}>
+                    <Text style={styles.accountName}>{account.accountName}</Text>
+                    <Text style={styles.accountDescription}>{account.accountDescription}</Text>
+                    <Text style={styles.sumText}>This Month total: ${currentMonthTotal.toFixed(2)}</Text>
+                    <Text style={styles.sumText}>Year to Date: ${yearToDateTotal.toFixed(2)}</Text>
+                </View>
+                <View style={styles.iconWrapper}>
+                    {getAccountIcon(account.accountIcon, 70, '#DDF2FD')}
+                </View>
+            </View>
         </TouchableOpacity>
     );
 };
@@ -50,6 +61,21 @@ const styles = StyleSheet.create({
         borderRadius: 10,
         marginVertical: 8,
         marginHorizontal: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+    },
+    contentWrapper: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+    },
+    textWrapper: {
+        flex: 8, // Adjust as needed for text space
+    },
+    iconWrapper: {
+        flex: 2, // Adjust as needed for icon space
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     accountName: {
         fontSize: 18,
@@ -57,16 +83,19 @@ const styles = StyleSheet.create({
         color: '#DDF2FD',
     },
     accountDescription: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#DDF2FD',
         marginTop: 5,
+        fontStyle: 'italic',
     },
     sumText: {
         fontSize: 14,
         color: '#DDF2FD',
         marginTop: 5,
     },
-    // ... other styles
+
+    // ... other styles ...
 });
+
 
 export default AccountCard;

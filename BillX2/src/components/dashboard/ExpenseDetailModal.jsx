@@ -1,6 +1,5 @@
 //src/components/dashboard/ExpenseDetailModal.jsx
 
-
 import React, { useState, useContext, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal, Image, ActivityIndicator, ScrollView } from 'react-native';
 import { GlobalContext } from '../../context/GlobalContext';
@@ -9,7 +8,6 @@ const ExpenseDetailModal = ({ isVisible, onClose, expense }) => {
     const [isImageLoading, setIsImageLoading] = useState(false);
     const { allCategories, allAccounts } = useContext(GlobalContext);
 
-    // Find the category and account names based on their IDs
     const [categoryName, setCategoryName] = useState('');
     const [accountName, setAccountName] = useState('');
 
@@ -32,14 +30,33 @@ const ExpenseDetailModal = ({ isVisible, onClose, expense }) => {
                 {expense ? (
                     <ScrollView>
                         <Text style={styles.modalTitle}>Expense Details</Text>
-                        <Text style={styles.modalText}>Amount: ${expense.amount.toFixed(2)}</Text>
-                        <Text style={styles.modalText}>Type: {expense.type.toUpperCase()}</Text>
-                        <Text style={styles.modalText}>Time: {new Date(expense.time).toLocaleDateString()}</Text>
-                        <Text style={styles.modalText}>Description: {expense.description}</Text>
-                        <Text style={styles.modalText}>Category: {categoryName}</Text>
-                        <Text style={styles.modalText}>Account: {accountName}</Text>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Amount</Text>
+                            <Text style={styles.modalText}>{expense.amount.toFixed(2)}</Text>
+                        </View>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Type</Text>
+                            <Text style={styles.modalText}>{expense.type.toUpperCase()}</Text>
+                        </View>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Time</Text>
+                            <Text style={styles.modalText}>{new Date(expense.time).toLocaleDateString()}</Text>
+                        </View>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Description</Text>
+                            <Text style={styles.modalText}>{expense.description}</Text>
+                        </View>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Category</Text>
+                            <Text style={styles.modalText}>{categoryName}</Text>
+                        </View>
+                        <View style={styles.sectionFrame}>
+                            <Text style={styles.sectionTitle}>Account</Text>
+                            <Text style={styles.modalText}>{accountName}</Text>
+                        </View>
                         {expense.imageLink ? (
-                            <>
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Receipt</Text>
                                 {isImageLoading && <ActivityIndicator size="large" color="#0000ff" />}
                                 <Image
                                     source={{ uri: expense.imageLink }}
@@ -48,10 +65,15 @@ const ExpenseDetailModal = ({ isVisible, onClose, expense }) => {
                                     onLoadStart={() => setIsImageLoading(true)}
                                     onLoadEnd={() => setIsImageLoading(false)}
                                 />
-                            </>
+                            </View>
                         ) : (
-                            <Text style={styles.modalText}>No image available</Text>
+                            <View style={styles.sectionFrame}>
+                                <Text style={styles.sectionTitle}>Receipt</Text>
+                                <Text style={styles.modalText}>No image available</Text>
+                            </View>
                         )}
+                        
+
                         <TouchableOpacity
                             style={styles.closeButton}
                             onPress={onClose}
@@ -68,8 +90,7 @@ const ExpenseDetailModal = ({ isVisible, onClose, expense }) => {
 const styles = StyleSheet.create({
     modalContent: {
         flex: 1,
-        padding: 20,
-        backgroundColor: 'white',
+        padding: 10,
         backgroundColor: '#164863',
     },
     modalTitle: {
@@ -81,36 +102,46 @@ const styles = StyleSheet.create({
     },
     image: {
         width: '100%',
-        height: 700, // You can adjust this height as needed
+        height: 300, // Adjust height to fit the modal appropriately
         marginTop: 20,
-        marginBottom: 20,
-        marginHorizontal: 5,
-        borderRadius: 10, // Adjust for rounded corners
+        borderRadius: 10,
     },
     closeButton: {
         padding: 10,
         backgroundColor: '#427D9D',
         borderRadius: 5,
-        alignSelf: 'center', // Center the button within the modal
+        alignSelf: 'center',
         width: '50%',
+        marginTop: 20,
     },
     buttonText: {
-        color: 'white',
+        color: '#DDF2FD',
         textAlign: 'center',
-        width: '100%',
-
+        fontSize: 16,
     },
     modalText: {
         color: '#DDF2FD',
         fontSize: 18,
         marginBottom: 10,
-        marginLeft: 20,
     },
-    buttonRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        marginTop: 20,
-        width: '100%',
+    sectionFrame: {
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: '#9BBEC8',
+        marginBottom: 50,
+        marginHorizontal: 16,
+        padding: 20,
+        position: 'relative',
+    },
+    sectionTitle: {
+        fontSize: 20,
+        fontWeight: 'bold',
+        color: '#9BBEC8',
+        position: 'absolute',
+        top: -20,
+        left: 10,
+        paddingHorizontal: 10,
+        backgroundColor: '#164863',
     },
     // ... other styles
 });

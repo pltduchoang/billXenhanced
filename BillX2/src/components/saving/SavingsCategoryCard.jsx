@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import LinearGradient from 'react-native-linear-gradient';
 import { GlobalContext } from '../../context/GlobalContext'; // Adjust the path as necessary
+import { getCategoryIcon } from '../iconLibrary/CategoryIconLibrary';
 
 const SavingsCategoryCard = ({ category, type, onLongPress }) => {
     const {
@@ -49,10 +50,15 @@ const SavingsCategoryCard = ({ category, type, onLongPress }) => {
                 start={{ x: 0, y: 0 }}
                 end={{ x: spendingPercentage / 100, y: 0 }}
                 style={styles.card}>
-                <Text style={styles.categoryName}>{category.categoryName}</Text>
-                <Text style={styles.infoText}>
-                    {type === 'saving' ? 'Saved: ' : 'Spent: '} {spendingPercentage.toFixed(2)}%
-                </Text>
+                <View style={styles.textContainer}>
+                    <Text style={styles.categoryName}>{category.categoryName}</Text>
+                    <Text style={styles.infoText}>
+                        {type === 'saving' ? 'Saved: ' : 'Spent: '} {spendingPercentage.toFixed(2)}%
+                    </Text>
+                </View>
+                <View style={styles.iconContainer}>
+                    {getCategoryIcon(category.categoryIcon, 50, '#DDF2FD')}
+                </View>
             </LinearGradient>
         </TouchableOpacity>
     );
@@ -60,10 +66,15 @@ const SavingsCategoryCard = ({ category, type, onLongPress }) => {
 
 const styles = StyleSheet.create({
     card: {
+        flexDirection: 'row',
         padding: 15,
         borderRadius: 10,
         marginVertical: 8,
         marginHorizontal: 16,
+        alignItems: 'center',
+    },
+    textContainer: {
+        flex: 8,
     },
     categoryName: {
         fontSize: 18,
@@ -75,7 +86,12 @@ const styles = StyleSheet.create({
         marginTop: 5,
         fontWeight: 'bold',
     },
-    // ... other styles
+    iconContainer: {
+        flex: 2,
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    // ... other styles ...
 });
 
 export default SavingsCategoryCard;

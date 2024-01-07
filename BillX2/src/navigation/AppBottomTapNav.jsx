@@ -3,14 +3,17 @@
 
 import React from 'react';
 import { createMaterialBottomTabNavigator } from '@react-navigation/material-bottom-tabs';
-import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import Dashboard from '../screens/Dashboard';
 import Settings from '../screens/Settings';
 import Categories from '../screens/Categories';
 import Accounts from '../screens/Accounts';
 import Savings from '../screens/Savings';
 
-
+import AccountIcon from '../icons/bank-check.svg'
+import CategoryIcon from '../icons/format-list-bulleted-type.svg'
+import DashboardIcon from '../icons/view-dashboard-variant-outline.svg'
+import SavingsIcon from '../icons/piggy-bank-outline.svg'
+import SettingsIcon from '../icons/cog.svg'
 
 const Tab = createMaterialBottomTabNavigator();
 
@@ -23,45 +26,57 @@ export default function AppBottomTapNav() {
         barStyle={{ 
             backgroundColor: '#427D9D',
             height: 70,
-        }}>
-            <Tab.Screen name="Categories" component={Categories}
+        }}
+        shifting={false}>
+            <Tab.Screen 
+                name="Categories" 
+                component={Categories}
                 options={{
                     tabBarLabel: 'Categories',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="format-list-bulleted" color={color} size={26} />
+                    tabBarIcon: ({ color}) => ( // Destructure size from argument
+                        <CategoryIcon width={26} height={26} fill={color} />
                     ),
                 }} 
             />
-            <Tab.Screen name="Accounts" component={Accounts} 
+
+            <Tab.Screen 
+                name="Accounts" 
+                component={Accounts}
                 options={{
                     tabBarLabel: 'Accounts',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="bank" color={color} size={26} />
-                    ),
+                    tabBarIcon: ({ color, size }) => ( // Destructure size from argument
+                        <AccountIcon width={26} height={26} fill={color} />                    ),
                 }}
             />
-            <Tab.Screen name="Dashboard" component={Dashboard} 
+
+            <Tab.Screen 
+                name="Dashboard" 
+                component={Dashboard}
                 options={{
                     tabBarLabel: 'Dashboard',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="view-dashboard" color={color} size={26} />
-                    ),
+                    tabBarIcon: ({ color, size }) => ( // Destructure size from argument
+                        <DashboardIcon width={26} height={26} fill={color} />                    ),
                 }}
             />
-            <Tab.Screen name="Savings" component={Savings} 
+
+            <Tab.Screen 
+                name="Savings" 
+                component={Savings}
                 options={{
                     tabBarLabel: 'Savings',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="piggy-bank" color={color} size={26} />
+                    tabBarIcon: ({ color, size }) => ( // Destructure size from argument
+                        <SavingsIcon width={26} height={26} fill={color}/>
                     ),
                 }}
             />
-            <Tab.Screen name="Settings" component={Settings} 
+
+            <Tab.Screen 
+                name="Settings" 
+                component={Settings}
                 options={{
                     tabBarLabel: 'Settings',
-                    tabBarIcon: ({ color }) => (
-                        <Icon name="cogs" color={color} size={26} />
-                    ),
+                    tabBarIcon: ({ color, size }) => ( // Destructure size from argument
+                        <SettingsIcon width={26} height={26} fill={color} />                    ),
                 }}
             />
         </Tab.Navigator>

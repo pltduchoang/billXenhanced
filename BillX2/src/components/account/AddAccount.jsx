@@ -1,28 +1,30 @@
+//src/components/account/AddAccount.jsx
+
 import React, { useState, useContext } from 'react';
 import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet } from 'react-native';
 import { GlobalContext } from '../../context/GlobalContext';
-import AccountService from '../../services/AccountService'; // Import the AccountService
+import AccountService from '../../services/AccountService';
+import AccountIconPicker from './AccountIconPicker'; // Adjust the import path as necessary
 
 const AddAccount = ({ isVisible, onClose }) => {
     const { user, setRefreshPage } = useContext(GlobalContext);
     const [accountName, setAccountName] = useState('');
     const [accountDescription, setAccountDescription] = useState('');
-    const [accountIcon, setAccountIcon] = useState(''); // Placeholder for account icon logic
+    const [accountIcon, setAccountIcon] = useState('');
 
     const handleAddAccount = async () => {
         if (user && user.uid && accountName.trim()) {
             const newAccount = {
                 accountName,
                 accountDescription,
-                accountIcon, // Include logic to handle account icons
-                // Removed the 'records' array as it's no longer needed
+                accountIcon,
             };
             await AccountService.createAccount(user.uid, newAccount);
             setAccountName('');
             setAccountDescription('');
             setAccountIcon('');
-            setRefreshPage(prev => prev + 1); // Update refreshPage to trigger a refresh
-            onClose(); // Close the modal
+            setRefreshPage(prev => prev + 1);
+            onClose();
         }
     };
 
@@ -49,13 +51,7 @@ const AddAccount = ({ isVisible, onClose }) => {
                     onChangeText={setAccountDescription}
                 />
 
-                {/* Add your logic here for the account icon input if necessary */}
-                {/* <TextInput
-                    style={styles.input}
-                    placeholder="Account Icon"
-                    value={accountIcon}
-                    onChangeText={setAccountIcon}
-                /> */}
+                <AccountIconPicker onSelect={setAccountIcon} currentIcon={accountIcon} />
 
                 <TouchableOpacity
                     style={styles.button}

@@ -109,6 +109,7 @@ const Dashboard = () => {
             await AccountService.createAccount(userId, {
                 accountName: "General Account",
                 accountDescription: "Default account for general expenses",
+                accountIcon,
             });
         }
     };
@@ -181,17 +182,41 @@ const Dashboard = () => {
         backgroundColor: '#427D9D',
         backgroundGradientFrom: '#427D9D',
         backgroundGradientTo: '#427D9D',
-        decimalPlaces: 2, // optional, defaults to 2dp
+        decimalPlaces: 0, // optional, defaults to 2dp
         color: (opacity = 1) => `rgba(221, 242, 253, ${opacity})`,
         labelColor: (opacity = 1) => `rgba(221, 242, 253, ${opacity})`,
         style: {
             borderRadius: 16
         },
         propsForDots: {
-            r: "6",
+            r: "2",
             strokeWidth: "2",
             stroke: "#ffa726"
         }
+    };
+
+    //Change year
+    // Function to get the last 10 years
+    const getLast10Years = () => {
+        const currentYear = new Date().getFullYear();
+        const years = [];
+        for (let i = 0; i < 10; i++) {
+            years.push(currentYear - i);
+        }
+        return years;
+    };
+
+    const YearChangeButton = ({ year, onPress }) => {
+        return (
+            <TouchableOpacity style={styles.yearButton} onPress={() => onPress(year)}>
+                <Text style={styles.yearButtonText}>{year}</Text>
+            </TouchableOpacity>
+        );
+    };
+
+    const handleChangeYear = (year) => {
+        setCurrentYear(year);
+        setRefreshPage(prev => prev + 1 );
     };
 
     const renderExpensesForMonth = (expenses, monthName, monthKey) => {
@@ -237,11 +262,6 @@ const Dashboard = () => {
     };
 
 
-    //CHART
-
-
-
-
     return (
         isLoading ? (
             <View style={[styles.container, {justifyContent:'center'}]}>
@@ -251,12 +271,13 @@ const Dashboard = () => {
         ) : (
             <SafeAreaView style={styles.container}>
                 <ScrollView >
+                    <Text style={styles.title}>Dashboard</Text>
                     <View style={styles.chartContainer}>
                         {/* chart */}
                 
                         <LineChart
                             data={data}
-                            width={screenWidth}
+                            width={screenWidth -20}
                             height={220}
                             chartConfig={chartConfig}
                             bezier // This prop makes the line chart curved
@@ -266,7 +287,7 @@ const Dashboard = () => {
                             }}
                         />
                     </View>
-                    <Text style={styles.title}>Dashboard</Text>
+                    <Text style={styles.title}>History</Text>
                    
                     <TouchableOpacity onPress={() => setShowExpenseLog(!showExpenseLog)}>
                         <Text style={styles.sectionText}>Expense Log</Text>
@@ -316,6 +337,16 @@ const Dashboard = () => {
                 >
                     <Text style={styles.addButtonText}>+</Text>
                 </TouchableOpacity>
+
+                <View style={styles.yearButtonsContainer}>
+                    {getLast10Years().map((year) => (
+                        <YearChangeButton
+                            key={year}
+                            year={year}
+                            onPress={handleChangeYear}
+                        />
+                    ))}
+                </View>
             </SafeAreaView>
         )
     );
@@ -360,7 +391,7 @@ const styles = StyleSheet.create({
     addButton: {
         position: 'absolute',
         right: 20,
-        bottom: 20,
+        bottom: 150,
         width: 60,
         height: 60,
         borderRadius: 30,
@@ -401,10 +432,28 @@ const styles = StyleSheet.create({
         color: '#DDF2FD',
     },
     chartContainer: {
-        padding: 20,
         backgroundColor: '#427D9D',
         borderRadius: 10,
-        margin: 20,
+        margin: 10,
+    },
+    yearButtonsContainer: {
+        flexDirection: 'row',
+        flexWrap: 'wrap',
+        justifyContent: 'space-between',
+        marginVertical: 10,
+        paddingHorizontal: 20,
+    },
+    yearButton: {
+        backgroundColor: '#427D9D',
+        paddingVertical: 10,
+        paddingHorizontal: 20,
+        borderRadius: 10,
+        marginVertical: 5,
+    },
+    yearButtonText: {
+        color: '#DDF2FD',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });
 

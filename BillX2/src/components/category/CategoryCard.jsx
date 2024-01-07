@@ -1,14 +1,15 @@
 // components/category/CategoryCard.jsx
-import React, { useEffect } from 'react';
+import React , {useEffect} from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { getCategoryIcon } from '../iconLibrary/CategoryIconLibrary';
 
 const CategoryCard = ({ category, allMonthlyExpense, currentMonth, onEdit, onPress }) => {
-    const calculateExpensesForCategory = (expenses) => {
+    // Helper function to calculate total expenses for a category in a given month
+    const calculateExpensesForMonth = (expenses) => {
         return expenses.reduce((sum, expense) => {
-            // Check if the expense is associated with this category
             if (expense.categoryId === category.id) {
-                // Adjust sum based on expense type
-                return expense.type === 'spend' ? sum + expense.amount : sum - expense.amount;
+                const updatedSum = expense.type === 'spend' ? sum + expense.amount : sum - expense.amount;
+                return updatedSum;
             }
             return sum;
         }, 0);
@@ -16,12 +17,14 @@ const CategoryCard = ({ category, allMonthlyExpense, currentMonth, onEdit, onPre
 
     // Calculate total expenses for the current month
     const currentMonthExpenses = Object.values(allMonthlyExpense)[currentMonth];
-    const currentMonthTotal = calculateExpensesForCategory(currentMonthExpenses);
+    const currentMonthTotal = calculateExpensesForMonth(currentMonthExpenses);
 
-    // Calculate year-to-date expenses
+
     const yearToDateTotal = Object.values(allMonthlyExpense)
-                                   .slice(0, currentMonth + 1)
-                                   .reduce((total, monthlyExpenses) => total + calculateExpensesForCategory(monthlyExpenses), 0);
+                                .reduce((total, monthlyExpenses) => {
+                                    return total + calculateExpensesForMonth(monthlyExpenses);
+                                }, 0);
+
 
     const handleLongPress = () => {
         onEdit(category);
@@ -31,23 +34,34 @@ const CategoryCard = ({ category, allMonthlyExpense, currentMonth, onEdit, onPre
         onPress(category);
     };
 
+
     return (
         <TouchableOpacity style={styles.card} onLongPress={handleLongPress} onPress={handlePress}>
-            <Text style={styles.categoryName}>{category.categoryName}</Text>
-            <Text style={styles.categoryDescription}>{category.categoryDescription}</Text>
-            <Text style={styles.sumText}>This Month: ${currentMonthTotal.toFixed(2)}</Text>
-            <Text style={styles.sumText}>Year to Date: ${yearToDateTotal.toFixed(2)}</Text>
+            <View style={styles.textContainer}>
+                <Text style={styles.categoryName}>{category.categoryName}</Text>
+                <Text style={styles.categoryDescription}>{category.categoryDescription}</Text>
+                <Text style={styles.sumText}>This Month: ${currentMonthTotal.toFixed(2)}</Text>
+                <Text style={styles.sumText}>Year to Date: ${yearToDateTotal.toFixed(2)}</Text>
+            </View>
+            <View style={styles.iconContainer}>
+                {getCategoryIcon(category.categoryIcon, 60, '#DDF2FD')}
+            </View>
         </TouchableOpacity>
     );
 };
 
 const styles = StyleSheet.create({
     card: {
+        flexDirection: 'row',
         backgroundColor: '#427D9D',
         padding: 15,
         borderRadius: 10,
         marginVertical: 8,
         marginHorizontal: 16,
+        alignItems: 'center', // Align items vertically
+    },
+    textContainer: {
+        flex: 8, // Take 60% of the space
     },
     categoryName: {
         fontSize: 18,
@@ -55,16 +69,23 @@ const styles = StyleSheet.create({
         color: '#DDF2FD',
     },
     categoryDescription: {
-        fontSize: 14,
+        fontSize: 12,
         color: '#DDF2FD',
         marginTop: 5,
+        fontStyle: 'italic',
     },
     sumText: {
         fontSize: 14,
         color: '#DDF2FD',
         marginTop: 5,
     },
-    // ... other styles
+    iconContainer: {
+        flex: 2, // Take 40% of the space
+        justifyContent: 'center',
+        alignItems: 'center', // Center the icon horizontally and vertically
+    },
+    // ... other styles ...
 });
 
 export default CategoryCard;
+

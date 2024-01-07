@@ -1,5 +1,5 @@
 // src/components/category/CategoryDetails.jsx
-import React, { useContext, useState } from 'react';
+import React, { useContext, useState, useEffect } from 'react';
 import { Modal, View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { GlobalContext } from '../../context/GlobalContext';
 import ExpenseCard from '../dashboard/ExpenseCard';
@@ -7,6 +7,12 @@ import ExpenseDetailModal from '../dashboard/ExpenseDetailModal';
 import EditExpense from '../dashboard/EditExpense';
 
 const CategoryDetails = ({ isVisible, onClose, category }) => {
+    
+    useEffect(() => {
+        // Set only the current month to be expanded by default
+        setCollapsedMonths(prev => ({ ...prev, [monthKeys[currentMonth]]: false }));
+    }, [currentMonth]);
+    
     const {
         allCategories, allAccounts,
         currentMonth,
@@ -30,9 +36,14 @@ const CategoryDetails = ({ isVisible, onClose, category }) => {
     const monthlyExpenses = [janExpenses, febExpenses, marExpenses, aprExpenses, mayExpenses, junExpenses, 
                              julExpenses, augExpenses, sepExpenses, octExpenses, novExpenses, decExpenses];
 
+    // Reverse the order of months
+    const reversedMonthNames = [...monthNames].reverse();
+    const reversedMonthlyExpenses = [...monthlyExpenses].reverse();
+    const reversedMonthKeys = [...monthKeys].reverse();
+
     const renderExpensesForMonth = (expenses, monthName, monthKey) => {
         const isCurrentMonth = monthKeys[currentMonth] === monthKey;
-        const monthDisplayName = isCurrentMonth ? `${monthName} (This Month)` : monthName;
+        const monthDisplayName = isCurrentMonth ? `${monthName} (Current Month)` : monthName;
         const monthCategoryExpenses = expenses.filter(expense => expense.categoryId === category.id);
 
         const totalSpending = monthCategoryExpenses.reduce((total, expense) => {
@@ -47,7 +58,7 @@ const CategoryDetails = ({ isVisible, onClose, category }) => {
             <View key={monthKey}>
                 <TouchableOpacity style={styles.monthHeader} onPress={toggleCollapse}>
                     <Text style={styles.monthName}>{monthDisplayName}</Text>
-                    <Text style={styles.totalSpending}>Total Spending: ${totalSpending.toFixed(2)}</Text>
+                    <Text style={styles.totalSpending}>${totalSpending.toFixed(2)}</Text>
                 </TouchableOpacity>
                 {!collapsedMonths[monthKey] && (
                     monthCategoryExpenses.length > 0 ? (
@@ -87,7 +98,7 @@ const CategoryDetails = ({ isVisible, onClose, category }) => {
                 <Text style={styles.title}>{category.categoryName} Details</Text>
                 
                 <ScrollView>
-                    {monthNames.map((monthName, index) => renderExpensesForMonth(monthlyExpenses[index], monthName, monthKeys[index]))}
+                    {reversedMonthNames.map((monthName, index) => renderExpensesForMonth(reversedMonthlyExpenses[index], monthName, reversedMonthKeys[index]))}
                 </ScrollView>
 
                 <TouchableOpacity style={styles.closeButton} onPress={onClose}>
@@ -157,16 +168,17 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         justifyContent: 'space-between',
         padding: 10,
-        backgroundColor: '#427D9D',
+        marginBottom: 10,
     },
     monthName: {
         color: '#DDF2FD',
         fontSize: 18,
-        fontWeight: 'bold',
+        fontStyle: 'italic',
     },
     totalSpending: {
         color: '#DDF2FD',
         fontSize: 16,
+        fontWeight: 'bold',
     },
     // ... other styles
 });

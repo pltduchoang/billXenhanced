@@ -1,8 +1,11 @@
 // components/category/EditCategory.jsx
 import React, { useState, useContext, useEffect  } from 'react';
-import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Switch , Alert} from 'react-native';
+import { Modal, View, Text, TextInput, TouchableOpacity, StyleSheet, Switch , Alert, ScrollView} from 'react-native';
 import { GlobalContext } from '../../context/GlobalContext';
 import CategoryService from '../../services/CategoryService';
+import IconPicker from './IconPicker';
+
+
 
 const EditCategory = ({ isVisible, onClose, categoryData }) => {
     const { user, setRefreshPage } = useContext(GlobalContext);
@@ -27,7 +30,8 @@ const EditCategory = ({ isVisible, onClose, categoryData }) => {
                 categoryName,
                 categoryDescription,
                 categoryType,
-                categoryLimit: isBudget ? categoryLimit : null,
+                categoryIcon: selectedIconName, // Include the icon name
+                categoryLimit: isBudget ? parseFloat(categoryLimit) || 0 : null,
             };
             await CategoryService.updateCategory(user.uid, categoryData.id, updatedCategory);
             setRefreshPage(prev => prev + 1); // Update refreshPage to trigger a refresh
@@ -58,90 +62,105 @@ const EditCategory = ({ isVisible, onClose, categoryData }) => {
         );
     };
 
+
+    //icon picker
+    const [selectedIconName, setSelectedIconName] = useState(categoryData.categoryIcon? categoryData.categoryIcon : '');
+
+
+
     return (
         <Modal
             visible={isVisible}
             animationType="slide"
             onRequestClose={onClose}
         >
-            <View style={styles.modalView}>
-                <Text style={styles.title}>Edit Category</Text>
-                
-                <TextInput
-                    style={styles.input}
-                    placeholder="Category Name"
-                    value={categoryName}
-                    onChangeText={setCategoryName}
-                />
-                
-                <TextInput
-                    style={styles.input}
-                    placeholder="Category Description"
-                    value={categoryDescription}
-                    onChangeText={setCategoryDescription}
-                />
-
-                <View style={styles.categoryTypeContainer}>
-                    <TouchableOpacity
-                        style={categoryType === 'spend' ? styles.activeButton : styles.typeButton}
-                        onPress={() => setCategoryType('spend')}
-                    >
-                        <Text style={styles.buttonText}>Spend</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={categoryType === 'saving' ? styles.activeButton : styles.typeButton}
-                        onPress={() => setCategoryType('saving')}
-                    >
-                        <Text style={styles.buttonText}>Saving</Text>
-                    </TouchableOpacity>
-                </View>
-
-                <View style={styles.budgetSwitchContainer}>
-                    <Text style={styles.text}>Make Budget / Saving:</Text>
-                    <Switch
-                        value={isBudget}
-                        onValueChange={(value) => {
-                            if (!isBudgetLocked) {
-                                setIsBudget(value);
-                            }
-                        }}
-                        disabled={isBudgetLocked}
-                    />
-                </View>
-
-                {isBudget && (
+            <ScrollView>
+                <View style={styles.modalView}>
+                    <Text style={styles.title}>Edit Category</Text>
+                    
                     <TextInput
                         style={styles.input}
-                        placeholder={categoryType === 'spend' ? "Budget Cap" : "Saving Target"}
-                        value={categoryLimit.toString()}
-                        onChangeText={setCategoryLimit}
-                        keyboardType="numeric"
+                        placeholder="Category Name"
+                        value={categoryName}
+                        onChangeText={setCategoryName}
                     />
-                )}
-                <View style={styles.buttonRow}>
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={handleSaveCategory}
-                    >
-                        <Text style={styles.buttonText}>Save Changes</Text>
-                    </TouchableOpacity>
                     
-                    <TouchableOpacity
-                        style={styles.button}
-                        onPress={onClose}
-                    >
-                        <Text style={styles.buttonText}>Cancel</Text>
-                    </TouchableOpacity>
-                </View>
-                <TouchableOpacity
-                    style={[styles.button, styles.deleteButton]}
-                    onPress={handleDeleteCategory}
-                >
-                    <Text style={styles.buttonText}>Delete Category</Text>
-                </TouchableOpacity>
+                    <TextInput
+                        style={styles.input}
+                        placeholder="Category Description"
+                        value={categoryDescription}
+                        onChangeText={setCategoryDescription}
+                    />
 
-                
-            </View>
+                    <View style={styles.categoryTypeContainer}>
+                        <TouchableOpacity
+                            style={categoryType === 'spend' ? styles.activeButton : styles.typeButton}
+                            onPress={() => setCategoryType('spend')}
+                        >
+                            <Text style={styles.buttonText}>Spend</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={categoryType === 'saving' ? styles.activeButton : styles.typeButton}
+                            onPress={() => setCategoryType('saving')}
+                        >
+                            <Text style={styles.buttonText}>Saving</Text>
+                        </TouchableOpacity>
+                    </View>
+
+                    <View style={styles.budgetSwitchContainer}>
+                        <Text style={styles.text}>Make Budget / Saving:</Text>
+                        <Switch
+                            value={isBudget}
+                            onValueChange={(value) => {
+                                if (!isBudgetLocked) {
+                                    setIsBudget(value);
+                                }
+                            }}
+                            disabled={isBudgetLocked}
+                        />
+                    </View>
+
+                    {isBudget && (
+                        <TextInput
+                            style={styles.input}
+                            placeholder={categoryType === 'spend' ? "Budget Cap" : "Saving Target"}
+                            value={categoryLimit.toString()}
+                            onChangeText={setCategoryLimit}
+                            keyboardType="numeric"
+                        />
+                    )}
+
+
+                    <IconPicker
+                        onSelect={setSelectedIconName}
+                        currentIcon={selectedIconName}
+                    />
+
+                    <View style={styles.buttonRow}>
+                        <TouchableOpacity
+                            style={styles.button}
+                            onPress={handleSaveCategory}
+                        >
+                            <Text style={styles.buttonText}>Save Changes</Text>
+                        </TouchableOpacity>
+                        
+                        <TouchableOpacity
+                            style={styles.button}
+                            onPress={onClose}
+                        >
+                            <Text style={styles.buttonText}>Cancel</Text>
+                        </TouchableOpacity>
+                    </View>
+                    <TouchableOpacity
+                        style={[styles.button, styles.deleteButton]}
+                        onPress={handleDeleteCategory}
+                    >
+                        <Text style={styles.buttonText}>Delete Category</Text>
+                    </TouchableOpacity>
+
+                    
+                </View>
+            </ScrollView>
         </Modal>
     );
 };
